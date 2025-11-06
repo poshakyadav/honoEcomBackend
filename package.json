@@ -4,7 +4,10 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    
+    "db:studio:local": "powershell -ExecutionPolicy Bypass -File ./studio.ps1",
+    "db:studio:remote": "npx drizzle-kit studio"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.4",
@@ -14,6 +17,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251014.0",
     "@types/node": "^24.9.2",
+    "better-sqlite3": "^12.4.1",
+    "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.6",
     "tsx": "^4.20.6",
     "wrangler": "^4.4.0"

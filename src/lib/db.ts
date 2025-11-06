@@ -1,9 +1,11 @@
-// src/lib/db.ts   (replace the whole file)
-import { Context } from "hono";
-import { Env, User, RefreshToken } from "../types";
+import { drizzle } from 'drizzle-orm/d1';
+import { eq } from 'drizzle-orm';
+import { Context } from 'hono';
+import { Env, User, RefreshToken } from '../types';
+import * as schema from '../db/schema';  // ← correct path
 
-interface D1Row {
-  [column: string]: any;
+export function getDb(bindings: Env['Bindings']) {
+  return drizzle(bindings.DB, { schema });
 }
 
 /* ---------- GET USER ---------- */
@@ -11,29 +13,30 @@ export async function getUserByEmail(
   c: Context<Env>,
   email: string
 ): Promise<User | null> {
-  const stmt = c.env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email);
-  const { results } = await stmt.all<D1Row>();
-  return (results[0] as User) ?? null;
+  const db = getDb(c.env);
+  const result = await db.query.users.findFirst({
+    where: eq(schema.users.email, email),
+  });
+  return result ?? null;
 }
 
 /* ---------- CREATE USER ---------- */
 export async function createUser(
   c: Context<Env>,
-  user: Omit<User, "id" | "created_at">
+  user: Omit<User, 'id' | 'created_at'>
 ): Promise<number> {
-  const stmt = c.env.DB.prepare(
-    `INSERT INTO users (email, password_hash, name, phone, address, role)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(
-    user.email,
-    user.password_hash,
-    user.name,
-    user.phone ?? null,
-    user.address ?? null,
-    user.role
-  );
-  const { meta } = await stmt.run();
-  return Number(meta.last_row_id);
+  const db = getDb(c.env);
+  const [inserted] = await db
+    .insert(schema.users)
+    .values({
+      ...user,
+      // Ensure nulls are passed correctly
+      phone: user.phone ?? null,
+      address: user.address ?? null,
+      role: user.role ?? 'user',
+    })
+    .returning({ id: schema.users.id });
+  return inserted.id;
 }
 
 /* ---------- REFRESH TOKENS ---------- */
@@ -43,29 +46,29 @@ export async function storeRefreshToken(
   tokenHash: string,
   expiresAt: string
 ): Promise<void> {
-  await c.env.DB.prepare(
-    "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)"
-  )
-    .bind(userId, tokenHash, expiresAt)
-    .run();
+  const db = getDb(c.env);
+  await db.insert(schema.refresh_tokens).values({
+    user_id: userId,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+  });
 }
 
 export async function getRefreshTokenHash(
   c: Context<Env>,
   tokenHash: string
 ): Promise<RefreshToken | null> {
-  const stmt = c.env.DB.prepare(
-    "SELECT * FROM refresh_tokens WHERE token_hash = ?"
-  ).bind(tokenHash);
-  const { results } = await stmt.all<D1Row>();
-  return (results[0] as RefreshToken) ?? null;
+  const db = getDb(c.env);
+  const result = await db.query.refresh_tokens.findFirst({
+    where: eq(schema.refresh_tokens.token_hash, tokenHash),
+  });
+  return result ?? null;
 }
 
 export async function deleteRefreshToken(
   c: Context<Env>,
   tokenHash: string
 ): Promise<void> {
-  await c.env.DB.prepare("DELETE FROM refresh_tokens WHERE token_hash = ?")
-    .bind(tokenHash)
-    .run();
+  const db = getDb(c.env);
+  await db.delete(schema.refresh_tokens).where(eq(schema.refresh_tokens.token_hash, tokenHash));
 }

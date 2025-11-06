@@ -1,7 +1,6 @@
 import { Context } from "hono";
 import { D1Database } from "@cloudflare/workers-types";
 
-
 export interface Env {
   Bindings: {
     DB: D1Database;
@@ -11,19 +10,20 @@ export interface Env {
   };
 }
 
+// Match Drizzle's inferred types exactly
 export interface User {
   id: number;
   email: string;
   password_hash: string;
   name: string;
-  phone?: string;
-  address?: string;
-  role: "user" | "admin";
-  created_at: string;
+  phone: string | null;        // ← was `? string`
+  address: string | null;      // ← was `? string`
+  role: "user" | "admin" | null; // ← was `"user" | "admin"`
+  created_at: string | null;   // ← was `string`
 }
 
-export interface TokenPayload extends Record<string, unknown> {  // Add extends Record<string, unknown>
-  sub: string; // user.id
+export interface TokenPayload extends Record<string, unknown> {
+  sub: string;
   email: string;
   role: "user" | "admin";
   exp: number;
@@ -37,10 +37,9 @@ export interface RefreshToken {
   user_id: number;
   token_hash: string;
   expires_at: string;
-  created_at: string;
+  created_at: string | null;   // ← was `string`
 }
 
-// Extend Context for user
 declare module "hono" {
   interface ContextVariableMap {
     user: TokenPayload;
