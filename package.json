@@ -5,12 +5,12 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    
     "db:studio:local": "powershell -ExecutionPolicy Bypass -File ./studio.ps1",
     "db:studio:remote": "npx drizzle-kit studio"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.4",
+    "cloudinary": "^2.8.0",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.4"
   },
