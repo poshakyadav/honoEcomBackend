@@ -17,6 +17,43 @@ export const users = sqliteTable('users', {
 });
 
 // ------------------------------------------------------------------
+// Address related schema's
+// ------------------------------------------------------------------
+
+// User Addresses (shipping)
+export const addresses = sqliteTable('addresses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  user_id: integer('user_id').notNull().references(() => users.id),
+  name: text('name').notNull(),  // e.g., "Home", "Office"
+  line1: text('line1').notNull(),
+  line2: text('line2'),
+  city: text('city').notNull(),
+  state: text('state').notNull(),
+  pincode: text('pincode').notNull().$type<string>(),  // 6 digits
+  country: text('country').default('India'),
+  phone: text('phone').notNull(),
+  is_default: integer('is_default', { mode: 'boolean' }).default(false),
+  is_serviceable: integer('is_serviceable', { mode: 'boolean' }).default(false),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Pickup Addresses (admin only, one per app - but linked to admin user)
+export const pickup_addresses = sqliteTable('pickup_addresses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  admin_id: integer('admin_id').notNull().references(() => users.id),  // Admin user
+  line1: text('line1').notNull(),
+  line2: text('line2'),
+  city: text('city').notNull(),
+  state: text('state').notNull(),
+  pincode: text('pincode').notNull(),
+  country: text('country').default('India'),
+  phone: text('phone').notNull(),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// ------------------------------------------------------------------
 //  Products related schema's
 // ------------------------------------------------------------------
 export const product_categories = sqliteTable('product_categories', {
@@ -188,10 +225,16 @@ export const idx_variant_images = index('idx_variant_images').on(variant_images.
 export const idx_shipments_order = index('idx_shipments_order').on(shipments.order_id);
 export const idx_shipments_shiprocket = index('idx_shipments_shiprocket').on(shipments.shiprocket_shipment_id);
 
+// Address Related Indexes
+export const idx_addresses_user = index('idx_addresses_user').on(addresses.user_id);
+export const idx_pickup_admin = index('idx_pickup_admin').on(pickup_addresses.admin_id);
+
 // Optional: Relations (for type-safe joins if needed later)
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   refreshTokens: many(refresh_tokens),
+  addresses: many(addresses),
+  pickupAddresses: many(pickup_addresses),  // For admins
 }));
 
 export const refreshTokensRelations = relations(refresh_tokens, ({ one }) => ({
@@ -254,6 +297,15 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({  // Updat
   shipments: many(shipments),  // Add this
 }));
 
+// Address related Relations
+export const addressesRelations = relations(addresses, ({ one }) => ({
+  user: one(users, { fields: [addresses.user_id], references: [users.id] }),
+}));
+
+export const pickupAddressesRelations = relations(pickup_addresses, ({ one }) => ({
+  admin: one(users, { fields: [pickup_addresses.admin_id], references: [users.id] }),
+}));
+
 // Exported Inferred Types (for insert/select in other files)
 // Product related Exported Inferred Types
 export type ProductCategoryInsert = InferInsertModel<typeof product_categories>;
@@ -278,6 +330,13 @@ export type OrderSelect = InferSelectModel<typeof orders>;
 
 export type OrderItemInsert = InferInsertModel<typeof order_items>;
 export type OrderItemSelect = InferSelectModel<typeof order_items>;
+
+// Address related Exported Types
+export type AddressInsert = InferInsertModel<typeof addresses>;
+export type AddressSelect = InferSelectModel<typeof addresses>;
+
+export type PickupAddressInsert = InferInsertModel<typeof pickup_addresses>;
+export type PickupAddressSelect = InferSelectModel<typeof pickup_addresses>;
 
 
 // Add more as needed (e.g., for ratings, colors)

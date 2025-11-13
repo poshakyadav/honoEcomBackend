@@ -93,6 +93,33 @@ export const VariantDTO = z.object({
   })).optional(),
 });
 
+// Address related 
+export const AddressDTO = z.object({
+  name: z.string().min(1),
+  line1: z.string().min(1),
+  line2: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  pincode: z.string().length(6),
+  country: z.string().default('India'),
+  phone: z.string().min(10),
+});
+
+export const PickupAddressDTO = z.object({
+  line1: z.string().min(1),
+  line2: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  pincode: z.string().length(6),
+  country: z.string().default('India'),
+  phone: z.string().min(10),
+});
+
+// Address related Export Validators
+export const addressValidator = zValidator('json', AddressDTO);
+export const pickupAddressValidator = zValidator('json', PickupAddressDTO);
+
+// --------------------------------------
 export const categoryValidator = zValidator('json', CategoryDTO);
 export const productValidator = zValidator('json', ProductDTO);
 export const variantValidator = zValidator('json', VariantDTO);

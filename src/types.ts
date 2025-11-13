@@ -31,6 +31,8 @@ export interface User {
   address: string | null;      // ← was `? string`
   role: "user" | "admin" | null; // ← was `"user" | "admin"`
   created_at: string | null;   // ← was `string`
+  addresses?: Address[];  // Optional for queries
+  pickupAddresses?: PickupAddress[];  // For admins
 }
 
 export interface TokenPayload extends Record<string, unknown> {
@@ -144,6 +146,38 @@ export interface Shipment {
 // Extend Order type
 export interface Order extends Omit<OrderSelect, 'shipments'> {  // Assume OrderSelect from schema
   shipments: Shipment[];
+}
+
+
+export interface Address {
+  id: number;
+  user_id: number;
+  name: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  phone: string;
+  is_default: number;  // boolean 0/1
+  is_serviceable: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PickupAddress {
+  id: number;
+  admin_id: number;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  phone: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper interfaces if needed for queries

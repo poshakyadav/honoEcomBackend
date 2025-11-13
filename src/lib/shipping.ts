@@ -18,6 +18,15 @@ interface ShiprocketErrorResponse {
   status_code?: number;
 }
 
+interface ServiceabilityResponse {
+  available_courier_companies: Array<{
+    courier_name: string;
+    courier_id: number;
+    // ... other fields
+  }>;
+  // ... other fields
+}
+
 const BASE_URL = "https://apiv2.shiprocket.in/v1/"; // Sandbox; change to live
 const HEADERS = { "Content-Type": "application/json" };
 
@@ -74,7 +83,7 @@ export async function checkServiceability(
   weight: number,
   cod: boolean,
   weightUnit = "Kg"
-) {
+): Promise<ServiceabilityResponse> {
   const token = await getAuthToken(c);
   const params = new URLSearchParams({
     pickup_postcode: pickupPin,
@@ -86,7 +95,7 @@ export async function checkServiceability(
   const res = await retryFetch(`${BASE_URL}courier/serviceability?${params}`, {
     headers: { Authorization: `Bearer ${token}`, ...HEADERS },
   });
-  return res.json(); // { available_couriers: [...] }
+  return (await res.json()) as ServiceabilityResponse;
 }
 
 // 2. Create Order (POST /external/orders/create/adhoc)
