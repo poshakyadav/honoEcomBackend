@@ -4,6 +4,7 @@ import auth from './routes/auth';
 import { authMiddleware, adminMiddleware } from './middleware';
 import { Env } from './types';
 import products from './routes/products';
+import shipping from './routes/shipping';
 
 const app = new Hono<Env>();
 
@@ -13,6 +14,7 @@ app.use('*', cors({ origin: '*', credentials: true }));  // Adjust origin for pr
 // Routes
 app.route('/auth', auth);
 app.route('/products', products);
+app.route('/shipping', shipping);
 
 // Test Protected Route
 app.get('/protected', authMiddleware, (c) => {

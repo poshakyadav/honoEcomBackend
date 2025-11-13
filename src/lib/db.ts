@@ -72,3 +72,32 @@ export async function deleteRefreshToken(
   const db = getDb(c.env);
   await db.delete(schema.refresh_tokens).where(eq(schema.refresh_tokens.token_hash, tokenHash));
 }
+
+/* ---------- SHIPMENTS ---------- */
+// Shipping Helpers
+export async function createShipment(c: Context<Env>, shipment: Omit<schema.ShipmentInsert, 'id' | 'created_at' | 'updated_at'>) {
+  const db = getDb(c.env);
+  const now = new Date().toISOString();
+  const [inserted] = await db.insert(schema.shipments).values({
+    ...shipment,
+    created_at: now,
+    updated_at: now,
+  }).returning({ id: schema.shipments.id });
+  return inserted.id;
+}
+
+export async function updateShipment(c: Context<Env>, id: number, updates: Partial<schema.ShipmentInsert>) {
+  const db = getDb(c.env);
+  const now = new Date().toISOString();
+  await db.update(schema.shipments).set({ ...updates, updated_at: now }).where(eq(schema.shipments.id, id));
+}
+
+export async function getShipment(c: Context<Env>, id: number) {
+  const db = getDb(c.env);
+  return db.query.shipments.findFirst({ where: eq(schema.shipments.id, id), with: { order: true } });
+}
+
+export async function listShipmentsByOrder(c: Context<Env>, orderId: number) {
+  const db = getDb(c.env);
+  return db.query.shipments.findMany({ where: eq(schema.shipments.order_id, orderId) });
+}

@@ -140,6 +140,27 @@ export const order_items = sqliteTable('order_items', {
 });
 
 // ------------------------------------------------------------------
+//  Shipment related schema's
+// ------------------------------------------------------------------
+// Shipments (for detailed tracking per package)
+export const shipments = sqliteTable('shipments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  order_id: integer('order_id').notNull().references(() => orders.id),
+  shiprocket_shipment_id: text('shiprocket_shipment_id').notNull().unique(),
+  awb_code: text('awb_code').notNull(),  // Air Waybill
+  courier_name: text('courier_name').notNull(),
+  courier_partner_id: integer('courier_partner_id'),
+  pickup_eta: text('pickup_eta'),
+  delivery_eta: text('delivery_eta'),
+  status: text('status').notNull().$type<'pending' | 'ready_to_ship' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'rto' | 'cancelled'>(),
+  tracking_url: text('tracking_url'),
+  label_url: text('label_url'),  // PDF download
+  sub_status: text('sub_status'),  // e.g., "Out for Delivery"
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// ------------------------------------------------------------------
 //  Refresh Tokens Schema
 // ------------------------------------------------------------------
 export const refresh_tokens = sqliteTable('refresh_tokens', {
@@ -163,20 +184,14 @@ export const idx_category_attributes = index('idx_category_attributes').on(categ
 export const idx_rating_dist = index('idx_rating_dist').on(product_rating_distributions.product_id);
 export const idx_variant_images = index('idx_variant_images').on(variant_images.variant_id);
 
+// Shipment related Indexes
+export const idx_shipments_order = index('idx_shipments_order').on(shipments.order_id);
+export const idx_shipments_shiprocket = index('idx_shipments_shiprocket').on(shipments.shiprocket_shipment_id);
+
 // Optional: Relations (for type-safe joins if needed later)
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
   refreshTokens: many(refresh_tokens),
-}));
-
-export const ordersRelations = relations(orders, ({ one, many }) => ({
-  user: one(users, { fields: [orders.user_id], references: [users.id] }),
-  items: many(order_items),
-}));
-
-export const orderItemsRelations = relations(order_items, ({ one }) => ({
-  order: one(orders, { fields: [order_items.order_id], references: [orders.id] }),
-  product: one(products, { fields: [order_items.product_id], references: [products.id] }),
 }));
 
 export const refreshTokensRelations = relations(refresh_tokens, ({ one }) => ({
@@ -223,7 +238,24 @@ export const sizePricesRelations = relations(size_prices, ({ one }) => ({
   variant: one(product_variants, { fields: [size_prices.variant_id], references: [product_variants.id] }),
 }));
 
+// Shipment related Relations
+export const shipmentsRelations = relations(shipments, ({ one }) => ({
+  order: one(orders, { fields: [shipments.order_id], references: [orders.id] }),
+}));
+
+export const orderItemsRelations = relations(order_items, ({ one }) => ({
+  order: one(orders, { fields: [order_items.order_id], references: [orders.id] }),
+  product: one(products, { fields: [order_items.product_id], references: [products.id] }),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({  // Update existing
+  user: one(users, { fields: [orders.user_id], references: [users.id] }),
+  items: many(order_items),
+  shipments: many(shipments),  // Add this
+}));
+
 // Exported Inferred Types (for insert/select in other files)
+// Product related Exported Inferred Types
 export type ProductCategoryInsert = InferInsertModel<typeof product_categories>;
 export type ProductCategorySelect = InferSelectModel<typeof product_categories>;
 
@@ -235,5 +267,17 @@ export type ProductVariantSelect = InferSelectModel<typeof product_variants>;
 
 export type SizePriceInsert = InferInsertModel<typeof size_prices>;
 export type SizePriceSelect = InferSelectModel<typeof size_prices>;
+
+// Shipment related Exported Inferred Types
+export type ShipmentInsert = InferInsertModel<typeof shipments>;
+export type ShipmentSelect = InferSelectModel<typeof shipments>;
+
+// Order related Exported Inferred Types
+export type OrderInsert = InferInsertModel<typeof orders>;
+export type OrderSelect = InferSelectModel<typeof orders>;
+
+export type OrderItemInsert = InferInsertModel<typeof order_items>;
+export type OrderItemSelect = InferSelectModel<typeof order_items>;
+
 
 // Add more as needed (e.g., for ratings, colors)

@@ -1,5 +1,6 @@
 import { Context } from "hono";
 import { D1Database } from "@cloudflare/workers-types";
+import { OrderSelect } from "./db/schema";
 
 export interface Env {
   Bindings: {
@@ -7,9 +8,16 @@ export interface Env {
     ACCESS_SECRET: string;
     REFRESH_SECRET: string;
     ISSUER: string;
+    // Clodinary related
     CLOUDINARY_CLOUD_NAME: string;
     CLOUDINARY_API_KEY: string;
     CLOUDINARY_API_SECRET: string;
+    // Shiprocket related
+    SHIPROCKET_EMAIL: string;  // For auth
+    SHIPROCKET_PASSWORD: string;
+    SHIPROCKET_TOKEN?: string;  // Optional, auto-fetch
+    // Webhook secret for verification
+    SHIPROCKET_WEBHOOK_SECRET: string;
   };
 }
 
@@ -113,6 +121,29 @@ export interface VariantColor {
   id: number;
   name: string;
   hex_code: string | null;
+}
+
+// Shipment Related Interfaces
+export interface Shipment {
+  id: number;
+  order_id: number;
+  shiprocket_shipment_id: string;
+  awb_code: string;
+  courier_name: string;
+  courier_partner_id: number | null;
+  pickup_eta: string | null;
+  delivery_eta: string | null;
+  status: 'pending' | 'ready_to_ship' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'rto' | 'cancelled';
+  tracking_url: string | null;
+  label_url: string | null;
+  sub_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extend Order type
+export interface Order extends Omit<OrderSelect, 'shipments'> {  // Assume OrderSelect from schema
+  shipments: Shipment[];
 }
 
 // Helper interfaces if needed for queries
