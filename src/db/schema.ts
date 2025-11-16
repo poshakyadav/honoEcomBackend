@@ -146,7 +146,7 @@ export const size_prices = sqliteTable('size_prices', {
   discount_amount: integer('discount_amount').default(0),
   discounted_price: integer('discounted_price').default(0),
   total_price: integer('total_price').default(0),
-  stock: integer('stock').default(0),
+  stock: integer('stock').notNull().default(0),
   is_default: integer('is_default', { mode: 'boolean' }).default(false),
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
@@ -174,6 +174,22 @@ export const order_items = sqliteTable('order_items', {
   product_id: integer('product_id').notNull().references(() => products.id),
   quantity: integer('quantity').notNull(),
   price: integer('price').notNull(),
+});
+
+// ------------------------------------------------------------------
+//  Cart related schema's
+// ------------------------------------------------------------------
+export const cart_items = sqliteTable('cart_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  user_id: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  size_price_id: integer('size_price_id')
+    .notNull()
+    .references(() => size_prices.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').notNull().$default(() => 1),
+  created_at: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 // ------------------------------------------------------------------
@@ -228,6 +244,11 @@ export const idx_shipments_shiprocket = index('idx_shipments_shiprocket').on(shi
 // Address Related Indexes
 export const idx_addresses_user = index('idx_addresses_user').on(addresses.user_id);
 export const idx_pickup_admin = index('idx_pickup_admin').on(pickup_addresses.admin_id);
+
+// Cart Related Indexes
+// Index for fast user-cart look-ups
+export const idx_cart_user = index('idx_cart_user').on(cart_items.user_id);
+export const idx_cart_size_price = index('idx_cart_size_price').on(cart_items.size_price_id);
 
 // Optional: Relations (for type-safe joins if needed later)
 export const usersRelations = relations(users, ({ many }) => ({
@@ -304,6 +325,18 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
 
 export const pickupAddressesRelations = relations(pickup_addresses, ({ one }) => ({
   admin: one(users, { fields: [pickup_addresses.admin_id], references: [users.id] }),
+}));
+
+// Cart related Relations
+export const cartItemsRelations = relations(cart_items, ({ one }) => ({
+  user: one(users, {
+    fields: [cart_items.user_id],
+    references: [users.id],
+  }),
+  sizePrice: one(size_prices, {
+    fields: [cart_items.size_price_id],
+    references: [size_prices.id],
+  }),
 }));
 
 // Exported Inferred Types (for insert/select in other files)

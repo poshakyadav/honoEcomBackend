@@ -149,6 +149,7 @@ export interface Order extends Omit<OrderSelect, 'shipments'> {  // Assume Order
 }
 
 
+// Address Related Interfaces
 export interface Address {
   id: number;
   user_id: number;
@@ -179,5 +180,61 @@ export interface PickupAddress {
   created_at: string;
   updated_at: string;
 }
+
+// Cart Related Interfaces
+export interface CartItemSelect {
+  id: number;
+  user_id: number;
+  size_price_id: number;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  // joined data
+  sizePrice?: SizePrice & {
+    variant?: ProductVariant & {
+      product?: Product;
+      color?: VariantColor;
+      images?: { image_url: string; public_id: string }[];
+    };
+  };
+}
+
+
+// Add this type for cart response
+export type CartItemResponse = {
+  id: number;
+  user_id: number;
+  size_price_id: number;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  sizePrice: {
+    id: number;
+    size: string;
+    base_price: number;
+    discounted_price: number;
+    total_price: number;
+    stock: number;
+    variant: {
+      id: number;
+      name: string;
+      sku: string;
+      product: {
+        id: number;
+        brand: string;
+      } | undefined;
+      color: {
+        id: number;
+        name: string;
+        hex_code: string | null;
+      } | undefined;
+      images: {
+        image_url: string;
+        public_id: string;
+      }[];
+    } | undefined;
+  } | undefined;
+};
+
 
 // Helper interfaces if needed for queries

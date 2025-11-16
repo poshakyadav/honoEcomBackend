@@ -115,9 +115,24 @@ export const PickupAddressDTO = z.object({
   phone: z.string().min(10),
 });
 
+// Cart related
+// ---------- CART DTOs ----------
+export const AddToCartDTO = z.object({
+  size_price_id: z.number().int().positive(),
+  quantity: z.number().int().positive().default(1),
+});
+
+export const UpdateCartDTO = z.object({
+  quantity: z.number().int().min(0), // 0 → remove
+});
+
 // Address related Export Validators
 export const addressValidator = zValidator('json', AddressDTO);
 export const pickupAddressValidator = zValidator('json', PickupAddressDTO);
+
+// Cart related Export Validators
+export const addToCartValidator = zValidator('json', AddToCartDTO);
+export const updateCartValidator = zValidator('json', UpdateCartDTO);
 
 // --------------------------------------
 export const categoryValidator = zValidator('json', CategoryDTO);

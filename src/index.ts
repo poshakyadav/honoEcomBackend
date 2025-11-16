@@ -6,6 +6,7 @@ import { Env } from './types';
 import products from './routes/products';
 import shipping from './routes/shipping';
 import addresses from './routes/addresses';
+import cart from './routes/cart';
 
 const app = new Hono<Env>();
 
@@ -17,6 +18,7 @@ app.route('/auth', auth);
 app.route('/products', products);
 app.route('/shipping', shipping);
 app.route('/addresses', addresses);
+app.route('/cart', cart);
 
 // Test Protected Route
 app.get('/protected', authMiddleware, (c) => {
